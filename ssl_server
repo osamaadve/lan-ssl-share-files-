@@ -1,0 +1,15 @@
+Purpose:
+This component runs on the device that will host the files and handle incoming connections.
+
+Main Components:
+run_server(...):
+The main function to start the server. It sets up an SSL context (ssl.SSLContext) using the server's certificate (server.crt) and private key (server.key), creates a TCP socket, binds it to the specified port and IP address (0.0.0.0 to listen on all interfaces), starts listening for connections, and enters an infinite loop to accept incoming connections. For each successful connection, it wraps the socket with SSL (context.wrap_socket) and spawns a new thread to handle the client using handle_client.
+
+handle_client(ssl_conn, addr, base_share_path_abs):
+Runs in a separate thread for each connected client. It first receives an identity message from the client. Then, it enters a loop to receive and process client messages (recv_msg). Based on the message type (message, file_info for uploads, list_dir, download_file, disconnect), it performs the corresponding action (prints the message, receives the uploaded file, calls list_directory_safely, calls send_file_from_server, or breaks the loop).
+
+list_directory_safely(base_share_path, requested_rel_path):
+Securely lists the contents of the requested directory, applying strict checks to prevent Path Traversal attacks (ensuring the final path remains within base_share_path). Returns a list of items (files/folders) and their metadata.
+
+send_file_from_server(ssl_conn, base_share_path, requested_rel_path):
+Checks whether the requested file exists, is safe to access (within base_share_path), and then sends its metadata (file_info) followed by its content in chunks via send_msg to the client.
